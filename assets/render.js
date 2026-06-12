@@ -265,8 +265,8 @@
         <h3 class="news-title">${tv(it.title,lang)}</h3>
         <div class="news-label">${lang==="zh"?"重點摘要":"Key Points"}</div>
         <p>${tv(it.lead,lang)}</p>
-        ${hl?`<div class="news-label">${lang==="zh"?"研究亮點":"Highlights"}</div><ul class="news-list">${hl}</ul>`:""}
-        ${dls?`<div class="news-label">${lang==="zh"?"資料下載":"Downloads"}</div><ul class="news-downloads">${dls}</ul>`:""}
+        ${hl?`<details class="news-acc"><summary>${lang==="zh"?"研究亮點":"Highlights"}</summary><ul class="news-list">${hl}</ul></details>`:""}
+        ${dls?`<details class="news-acc" open><summary>${lang==="zh"?"資料下載":"Downloads"}</summary><ul class="news-downloads">${dls}</ul></details>`:""}
       </div>
     </article>`;
   }
@@ -276,8 +276,8 @@
       : `<div class="carousel-item"><div class="ci-img"><img src="${esc(src)}" alt="" loading="lazy"></div></div>`;
   }
   function carousel(id, title, items){
-    return `<div class="carousel-block reveal" style="margin-top:34px">
-      <div class="eyebrow" style="margin-bottom:14px">${esc(title)}</div>
+    return `<div class="carousel-block reveal" style="margin-top:${title?34:0}px">
+      ${title?`<div class="eyebrow" style="margin-bottom:14px">${esc(title)}</div>`:""}
       <div class="carousel" data-carousel>
         <button class="carousel-btn prev" aria-label="prev">&#10094;</button>
         <div class="carousel-track">${items.join("")}</div>
@@ -392,22 +392,32 @@
     return `
       <div class="prose partner-intro reveal">${pProse}</div>
       <div class="region-eyebrow reveal">${esc(tv(C.partner.regionsTitle,lang))}</div>
-      <div class="region-grid reveal">
-        ${C.partner.regions.map(r=>`
-          <div class="region-card" style="--rc:${esc(r.color)}">
-            <div class="region-head"><span class="region-name">${esc(tv(r.name,lang))}</span><span class="region-count">${(r.hospitals[lang]||[]).length}</span></div>
-            <ul class="region-list">${(r.hospitals[lang]||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
+      <div class="region-tabs reveal" data-tabs>
+        <div class="rt-bar" role="tablist">
+          ${C.partner.regions.map((r,i)=>`
+            <button class="rt-tab${i===0?' active':''}" role="tab" aria-selected="${i===0}" style="--rc:${esc(r.color)}">
+              ${esc(tv(r.name,lang))}<span class="rt-count">${(r.hospitals[lang]||[]).length}</span>
+            </button>`).join("")}
+        </div>
+        ${C.partner.regions.map((r,i)=>`
+          <div class="rt-panel${i===0?' active':''}" role="tabpanel" style="--rc:${esc(r.color)}">
+            <ul class="rt-list">${(r.hospitals[lang]||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
           </div>`).join("")}
       </div>`;
   }
   function teamBody(C, lang){
     return `
-      <div class="region-eyebrow reveal">${esc(tv(C.leadership.subtitle,lang))}</div>
       <div class="leader-grid reveal">
         ${C.leadership.leaders.map(l=>`<a href="${esc(l.link||'#')}" ${l.link?'target="_blank" rel="noopener"':''}><img src="${esc(l.img)}" alt="${esc(l.alt||'')}" loading="lazy"></a>`).join("")}
       </div>
-      ${carousel("team", tv(C.teamCarousel.title,lang), C.teamCarousel.items.map(it=>carItem(img(it.img,lang), it.link)))}
-      ${carousel("hteam", tv(C.hospitalTeam.title,lang), C.hospitalTeam.items.map(it=>carItem(img(it.img,lang), it.link)))}`;
+      <div class="team-tabs reveal" data-tabs>
+        <div class="rt-bar" role="tablist">
+          <button class="rt-tab active" role="tab" aria-selected="true">${esc(tv(C.teamCarousel.title,lang))}</button>
+          <button class="rt-tab" role="tab" aria-selected="false">${esc(tv(C.hospitalTeam.title,lang))}</button>
+        </div>
+        <div class="rt-panel active" role="tabpanel">${carousel("team", "", C.teamCarousel.items.map(it=>carItem(img(it.img,lang), it.link)))}</div>
+        <div class="rt-panel" role="tabpanel">${carousel("hteam", "", C.hospitalTeam.items.map(it=>carItem(img(it.img,lang), it.link)))}</div>
+      </div>`;
   }
   function researchBody(C, lang){
     return `
@@ -464,7 +474,6 @@
     about(C, lang){
       return pageHero("TPMI", tv(C.about.title,lang), tv(BLURB.about,lang)) +
         section("about", false, aboutBody(C,lang)) +
-        statsBand(C,lang) +
         milestonesSection(C,lang);
     },
     partner(C, lang){
@@ -472,7 +481,7 @@
         section("partner", false, partnerBody(C,lang));
     },
     team(C, lang){
-      return pageHero(lang==="zh"?"團隊":"Team", tv(C.leadership.title,lang), tv(BLURB.team,lang)) +
+      return pageHero(tv(C.leadership.subtitle,lang), tv(C.leadership.title,lang), tv(BLURB.team,lang)) +
         section("leadership", false, teamBody(C,lang));
     },
     research(C, lang){
@@ -526,6 +535,15 @@
     // lightbox
     document.querySelectorAll("[data-zoom]").forEach(im=>{
       im.onclick = ()=>openLightbox(im.src);
+    });
+
+    // region tabs
+    document.querySelectorAll("[data-tabs]").forEach(t=>{
+      const tabs=[...t.querySelectorAll(".rt-tab")], panels=[...t.querySelectorAll(".rt-panel")];
+      tabs.forEach((b,i)=>b.onclick=()=>{
+        tabs.forEach((x,j)=>{ x.classList.toggle("active",j===i); x.setAttribute("aria-selected", j===i); });
+        panels.forEach((p,j)=>p.classList.toggle("active",j===i));
+      });
     });
 
     // count-up stats
