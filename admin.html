@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TPMI · 管理後台 Admin</title>
+  <link rel="icon" href="images/tpmi_logo.png">
+  <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="login">
+    <div class="login-card">
+      <img src="images/tpmi_logo.png" alt="TPMI">
+      <h1>管理後台 Admin</h1>
+      <p class="sub">登入以編輯網站內容 · Sign in to edit site content</p>
+      <div class="field-row">
+        <label for="login-user">帳號 Username</label>
+        <input id="login-user" type="text" autocomplete="username" placeholder="admin">
+      </div>
+      <div class="field-row">
+        <label for="login-pass">密碼 Password</label>
+        <input id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn-login" id="btn-login">登入 Sign in</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="login-hint">原型示範帳密：<code>admin</code> / <code>tpmi2026</code><br>正式上線時請改由後端驗證。</div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app" id="app">
+    <div class="topbar">
+      <img class="logo" src="images/tpmi_logo.png" alt="TPMI">
+      <span class="tb-title">內容管理</span>
+      <span class="status-pill status-clean" id="status-pill"><span class="dot"></span>已發布</span>
+      <span class="spacer"></span>
+      <button class="tb-btn show-preview" id="btn-show-preview">📱 預覽</button>
+      <button class="tb-btn" id="btn-view">查看網站</button>
+      <button class="tb-btn" id="btn-export">匯出 JSON</button>
+      <button class="tb-btn" id="btn-discard">捨棄變更</button>
+      <button class="tb-btn primary" id="btn-publish">發布 Publish</button>
+      <button class="tb-btn ghost-danger" id="btn-reset">重設</button>
+      <button class="tb-btn" id="btn-logout">登出</button>
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="editor" id="editor"></main>
+      <section class="preview-pane">
+        <div class="preview-bar">
+          <span class="pv-title">即時預覽</span>
+          <span class="preview-lang">
+            <button data-lang="zh" class="active">中文</button>
+            <button data-lang="en">EN</button>
+          </span>
+          <span class="spacer" style="flex:1"></span>
+          <span class="device-toggle">
+            <button data-w="390">📱 手機</button>
+            <button data-w="800">▦ 平板</button>
+            <button data-w="full" class="active">🖥 桌機</button>
+          </span>
+        </div>
+        <div class="preview-stage">
+          <div class="preview-frame-wrap" id="preview-frame-wrap" style="width:100%;height:calc(100vh - 120px)">
+            <iframe id="preview-frame" title="preview"></iframe>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="assets/content.js"></script>
+  <script src="assets/admin.js"></script>
+</body>
+</html>
