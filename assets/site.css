@@ -140,7 +140,12 @@ main { padding-top:var(--header-h); }
 /* ---------------- Hero ---------------- */
 .hero { position:relative; background:#0e3e5b; }
 .hero img { width:100%; display:block; }
-.hero svg.hero-art { width:100%; height:auto; display:block; background:#fff; }
+/* hero scales with BOTH browser width and height: never taller than the
+   visible area under the fixed header, so resizing the window always keeps
+   the full artwork (and CTA) on screen */
+.hero svg.hero-art { width:100%; height:auto; display:block; background:#fff; max-height:calc(100vh - var(--header-h)); }
+.hero svg.hero-mobile { display:none; }
+.hero img.hero-desktop, .hero img.hero-mobile { max-height:calc(100vh - var(--header-h)); object-fit:cover; }
 .hero .hero-desktop { object-fit:cover; }
 .hero .hero-mobile { display:none; }
 .hero-cta {
@@ -435,8 +440,8 @@ a.platform-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-md);
 @media (max-width:640px){
   .header-tools .admin-link span { display:none; }
   .brand img { height:36px; }
-  .hero .hero-desktop { display:none; }
-  .hero .hero-mobile { display:block; }
+  .hero .hero-desktop, .hero svg.hero-desktop { display:none; }
+  .hero .hero-mobile, .hero svg.hero-mobile { display:block; }
   .split { grid-template-columns:1fr; gap:20px; }
   .split.reverse .split-media { order:0; }
   .split-media { max-width:520px; margin:0 auto; }
