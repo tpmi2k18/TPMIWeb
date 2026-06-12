@@ -166,25 +166,59 @@
     };
   })();
 
+  /* ---------- multi-page registry ---------- */
+  const PAGE = (document.body && document.body.dataset.page) || "home";
   const NAV = [
-    { id:"news", key:"news" },
-    { id:"intro", key:"intro" },
-    { id:"about", key:"about" },
-    { id:"partner", key:"partner" },
-    { id:"leadership", key:"leadership" },
-    { id:"research", key:"research" },
-    { id:"access", key:"accessData" },
-    { id:"collab", key:"collaboration" }
+    { page:"news",     key:"news",          file:"news.html" },
+    { page:"intro",    key:"intro",         file:"intro.html" },
+    { page:"about",    key:"about",         file:"about.html" },
+    { page:"partner",  key:"partner",       file:"partner.html" },
+    { page:"team",     key:"leadership",    file:"team.html" },
+    { page:"research", key:"research",      file:"research.html" },
+    { page:"data",     key:"accessData",    file:"data.html" },
+    { page:"collab",   key:"collaboration", file:"collab.html" }
   ];
+  // keep ?preview=1 across pages inside the admin preview iframe
+  const href = f => f + (PREVIEW ? "?preview=1" : "");
+
+  // homepage explore-card blurbs (presentation copy, not editable content)
+  const BLURB = {
+    news:    { zh:"《Nature》刊登與計畫最新動態", en:"Latest news, incl. the Nature papers" },
+    intro:   { zh:"為什麼台灣適合發展精準醫療",   en:"Why Taiwan is built for precision medicine" },
+    about:   { zh:"計畫簡介與發展歷程",           en:"The initiative and its milestones" },
+    partner: { zh:"全台合作醫院網絡",             en:"Partner hospitals across Taiwan" },
+    team:    { zh:"中研院與合作醫院研究團隊",     en:"Academia Sinica & hospital teams" },
+    research:{ zh:"已發表的重要研究成果",         en:"Published research highlights" },
+    data:    { zh:"開放研究資料平台",             en:"Open research data platforms" },
+    collab:  { zh:"五個步驟啟動合作研究",         en:"Five steps to collaborate" }
+  };
+  const ICONS = {
+    news:    '<path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2h-1zM7 9h7M7 12.5h7M7 16h4"/>',
+    intro:   '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>',
+    about:   '<circle cx="12" cy="12" r="9"/><path d="M12 10.5V17M12 7.2v.8"/>',
+    partner: '<path d="M5 21V8l7-5 7 5v13M9 21v-6h6v6M12 10v4M10 12h4"/>',
+    team:    '<circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9.5" r="2.4"/><path d="M3.5 19c.6-3.4 2.6-5 5-5s4.4 1.6 5 5M13.5 18.6c.5-2.5 1.4-3.8 3.4-3.8 1.7 0 3 1.2 3.6 3.6"/>',
+    research:'<path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 15.5h5"/>',
+    data:    '<ellipse cx="12" cy="5.5" rx="7" ry="2.8"/><path d="M5 5.5v13c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-13M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/>',
+    collab:  '<path d="M7 11l4.2 4.2a2 2 0 0 0 2.8 0L20 9.5M7 11L3.5 7.8 8 4.5l4 2 4.5-2 4 3.5-2.5 3.5M7 11l3-2.8"/>'
+  };
+  const icon = p => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[p]||""}</svg>`;
 
   function render(C, lang) {
     document.documentElement.setAttribute("data-lang", lang);
     document.documentElement.lang = lang === "zh" ? "zh-Hant" : "en";
 
-    /* ---- nav ---- */
-    const navHtml = NAV.map(n => `<a href="#${n.id}">${esc(tv(C[n.key].title, lang))}</a>`).join("");
+    /* ---- nav (page links; current page highlighted) ---- */
+    const navHtml = NAV.map(n =>
+      `<a href="${href(n.file)}"${n.page===PAGE?' class="active" aria-current="page"':''}>${esc(tv(C[n.key].title, lang))}</a>`).join("");
     document.getElementById("nav-desktop").innerHTML = navHtml;
     document.getElementById("nav-drawer").innerHTML = navHtml;
+
+    /* ---- per-page document title ---- */
+    const navItem = NAV.find(n => n.page === PAGE);
+    document.title = navItem
+      ? `${tv(C[navItem.key].title, lang)} · TPMI ${lang==="zh"?"台灣精準醫療計畫":"Taiwan Precision Medicine Initiative"}`
+      : (lang==="zh" ? "TPMI · 台灣精準醫療計畫" : "TPMI · Taiwan Precision Medicine Initiative");
 
     /* ---- lang toggle active ---- */
     document.querySelectorAll(".lang-toggle button").forEach(b =>
@@ -192,146 +226,16 @@
     document.querySelector(".admin-link span").textContent = lang === "zh" ? "管理後台" : "Admin";
 
     const m = document.getElementById("site-content");
-    const parts = [];
-
-    /* ===== HERO ===== */
-    // default art is the vector redraw; an image uploaded in admin overrides it
-    const heroDesk = C.hero.image && C.hero.image !== "images/top1-desktop.png"
-      ? `<img class="hero-desktop" src="${esc(C.hero.image)}" alt="TPMI">` : heroArt("desktop");
-    const heroMob = C.hero.imageMobile && C.hero.imageMobile !== "images/top1-mobile.png"
-      ? `<img class="hero-mobile" src="${esc(C.hero.imageMobile)}" alt="TPMI">` : heroArt("mobile");
-    parts.push(`
-      <section class="hero" id="top">
-        ${heroDesk}
-        ${heroMob}
-        <div class="hero-cta"><button id="hero-btn"><span class="cta-label">${esc(tv(C.hero.buttonText, lang))}</span></button></div>
-      </section>`);
-
-    /* ===== NEWS ===== */
-    parts.push(section("news", false, `
-      ${head(lang==="zh"?"最新消息":"Latest", tv(C.news.title, lang))}
-      ${C.news.items.map(it => newsCard(it, C.news.image, lang)).join("")}
-    `));
-
-    /* ===== INTRO ===== */
-    parts.push(section("intro", true, `
-      ${head(lang==="zh"?"精準醫療":"Why Taiwan", tv(C.intro.title, lang))}
-      ${split(img(C.intro.image, lang), C.intro.paragraphs[lang], lang, false)}
-    `));
-
-    /* ===== ABOUT ===== */
-    parts.push(section("about", false, `
-      ${head("TPMI", tv(C.about.title, lang))}
-      ${split(img(C.about.image, lang), C.about.paragraphs[lang], lang, true)}
-    `));
-
-    /* ===== DATA SNAPSHOTS (stats band) ===== */
-    parts.push(`
-      <section class="stats-band" id="stats">
-        <div class="wrap">
-          <div class="stats-head reveal">
-            <span class="eyebrow light">${esc(tv(C.stats.subtitle,lang))}</span>
-            <h2>${esc(tv(C.stats.title,lang))}</h2>
-          </div>
-          <div class="stats-grid reveal">
-            ${C.stats.items.map(s=>`<div class="stat"><div class="stat-value" data-target="${esc(s.value)}">${esc(s.value)}</div><div class="stat-label">${esc(tv(s.label,lang))}</div></div>`).join("")}
-          </div>
-        </div>
-      </section>`);
-
-    /* ===== MILESTONES (HTML timeline) ===== */
-    parts.push(section("milestones", true, `
-      ${head(lang==="zh"?"歷程":"Timeline", tv(C.milestones.title, lang))}
-      <div class="timeline reveal">
-        <div class="tl-line"></div>
-        ${C.milestones.events.map((ev,i)=>`
-          <div class="tl-row ${i%2?'right':'left'}">
-            <div class="tl-node"></div>
-            <div class="tl-card">
-              <div class="tl-meta"><span class="tl-year">${esc(ev.year)}</span><span class="tl-month">${esc(tv(ev.month,lang))}</span></div>
-              <p>${esc(tv(ev.text,lang))}</p>
-            </div>
-          </div>`).join("")}
-      </div>
-    `));
-
-    /* ===== PARTNER HOSPITALS (text + regions grid) ===== */
-    const pProse = `<h3>${esc(tv(C.partner.heading, lang))}</h3>` +
-      C.partner.paragraphs[lang].map(p=>`<p>${p}</p>`).join("");
-    parts.push(section("partner", false, `
-      ${head(lang==="zh"?"合作網絡":"Network", tv(C.partner.title, lang))}
-      <div class="prose partner-intro reveal">${pProse}</div>
-      <div class="region-eyebrow reveal">${esc(tv(C.partner.regionsTitle,lang))}</div>
-      <div class="region-grid reveal">
-        ${C.partner.regions.map(r=>`
-          <div class="region-card" style="--rc:${esc(r.color)}">
-            <div class="region-head"><span class="region-name">${esc(tv(r.name,lang))}</span><span class="region-count">${(r.hospitals[lang]||[]).length}</span></div>
-            <ul class="region-list">${(r.hospitals[lang]||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
-          </div>`).join("")}
-      </div>
-    `));
-
-    /* ===== LEADERSHIP ===== */
-    parts.push(section("leadership", true, `
-      ${head(tv(C.leadership.subtitle,lang), tv(C.leadership.title, lang))}
-      <div class="leader-grid reveal">
-        ${C.leadership.leaders.map(l=>`<a href="${esc(l.link||'#')}" ${l.link?'target="_blank" rel="noopener"':''}><img src="${esc(l.img)}" alt="${esc(l.alt||'')}" loading="lazy"></a>`).join("")}
-      </div>
-      ${carousel("team", tv(C.teamCarousel.title,lang), C.teamCarousel.items.map(it=>carItem(img(it.img,lang), it.link)))}
-      ${carousel("hteam", tv(C.hospitalTeam.title,lang), C.hospitalTeam.items.map(it=>carItem(img(it.img,lang), it.link)))}
-    `));
-
-    /* ===== RESEARCH ===== */
-    parts.push(section("research", false, `
-      ${head(lang==="zh"?"發表":"Publications", tv(C.research.title, lang))}
-      <div class="research-grid reveal">
-        <div class="paper-list">
-          ${C.research.items.map(r=>`<a class="paper" href="${esc(r.url||'#')}" target="_blank" rel="noopener">
-            <span class="paper-title">${esc(tv(r.title,lang))}</span>
-            <span class="paper-authors">${esc(tv(r.authors,lang))}</span></a>`).join("")}
-        </div>
-        <div class="research-media"><img src="${esc(C.research.sideImage)}" alt="" loading="lazy"></div>
-      </div>
-    `));
-
-    /* ===== ACCESS TO DATA (HTML platform cards) ===== */
-    parts.push(section("access", true, `
-      ${head(tv(C.accessData.subtitle,lang), tv(C.accessData.title, lang))}
-      <div class="platform-grid reveal">
-        ${C.accessData.cards.map(c=>{
-          const inner = `
-            <div class="platform-top"><span class="platform-name">${esc(c.name)}</span><span class="platform-tag">${esc(tv(c.tag,lang))}</span></div>
-            <p class="platform-desc">${esc(tv(c.desc,lang))}</p>
-            <div class="platform-foot">${ c.link ? `<span class="platform-cta">${lang==="zh"?"前往平台 →":"Open platform →"}</span>` : `<span class="platform-badge">${esc(tv(c.badge,lang))}</span>` }</div>`;
-          return c.link
-            ? `<a class="platform-card" href="${esc(c.link)}" target="_blank" rel="noopener">${inner}</a>`
-            : `<div class="platform-card no-link">${inner}</div>`;
-        }).join("")}
-      </div>
-    `));
-
-    /* ===== COLLABORATION (HTML steps) ===== */
-    parts.push(section("collab", false, `
-      ${head(tv(C.collaboration.intro,lang), tv(C.collaboration.title, lang))}
-      <ol class="steps reveal">
-        ${C.collaboration.steps.map((s,i)=>`
-          <li class="step">
-            <span class="step-num">${i+1}</span>
-            <div class="step-body"><h4>${esc(tv(s.title,lang))}</h4><p>${esc(tv(s.desc,lang))}</p></div>
-          </li>`).join("")}
-      </ol>
-      <div class="collab-actions">
-        <a class="btn-primary" href="${esc(C.collaboration.conceptSheetUrl)}" target="_blank" rel="noopener">${lang==="zh"?"下載 Concept Sheet 申請表":"Download Concept Sheet"}</a>
-        <a class="btn-ghost" href="mailto:${esc(C.contact.email)}">${lang==="zh"?"來信洽詢":"Contact us"} · ${esc(C.contact.email)}</a>
-      </div>
-    `));
-
-    m.innerHTML = parts.join("");
+    m.innerHTML = (PAGES[PAGE] || PAGES.home)(C, lang);
+    m.classList.remove("page-enter"); void m.offsetWidth; m.classList.add("page-enter");
 
     /* ===== FOOTER ===== */
     document.getElementById("site-footer").innerHTML = `
       <div class="footer-inner">
         <img class="footer-logo" src="images/tpmi_logo.png" alt="TPMI">
+        <nav class="footer-nav" aria-label="footer">
+          ${NAV.map(n=>`<a href="${href(n.file)}">${esc(tv(C[n.key].title,lang))}</a>`).join("")}
+        </nav>
         <div class="footer-meta">
           <div class="org">${esc(tv(C.contact.org,lang))}</div>
           <div>${esc(tv(C.contact.address,lang))}</div>
@@ -382,12 +286,218 @@
     </div>`;
   }
 
+  /* ============================================================
+     Section builders + page compositions
+     ============================================================ */
+  function heroSection(C, lang){
+    // default art is the vector redraw; an image uploaded in admin overrides it
+    const heroDesk = C.hero.image && C.hero.image !== "images/top1-desktop.png"
+      ? `<img class="hero-desktop" src="${esc(C.hero.image)}" alt="TPMI">` : heroArt("desktop");
+    const heroMob = C.hero.imageMobile && C.hero.imageMobile !== "images/top1-mobile.png"
+      ? `<img class="hero-mobile" src="${esc(C.hero.imageMobile)}" alt="TPMI">` : heroArt("mobile");
+    return `
+      <section class="hero" id="top">
+        ${heroDesk}
+        ${heroMob}
+        <div class="hero-cta"><button id="hero-btn"><span class="cta-label">${esc(tv(C.hero.buttonText, lang))}</span></button></div>
+      </section>`;
+  }
+
+  // banner at the top of every sub-page
+  function pageHero(eyebrow, title, blurb){
+    return `<section class="page-hero">
+      <div class="ph-deco" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="wrap">
+        <span class="eyebrow light reveal in">${esc(eyebrow)}</span>
+        <h1>${esc(title)}</h1>
+        ${blurb?`<p class="ph-blurb">${esc(blurb)}</p>`:""}
+      </div></section>`;
+  }
+
+  function statsBand(C, lang){
+    return `
+      <section class="stats-band" id="stats">
+        <div class="wrap">
+          <div class="stats-head reveal">
+            <span class="eyebrow light">${esc(tv(C.stats.subtitle,lang))}</span>
+            <h2>${esc(tv(C.stats.title,lang))}</h2>
+          </div>
+          <div class="stats-grid reveal">
+            ${C.stats.items.map(s=>`<div class="stat"><div class="stat-value" data-target="${esc(s.value)}">${esc(s.value)}</div><div class="stat-label">${esc(tv(s.label,lang))}</div></div>`).join("")}
+          </div>
+        </div>
+      </section>`;
+  }
+
+  function newsBody(C, lang){
+    return C.news.items.map(it => newsCard(it, C.news.image, lang)).join("");
+  }
+
+  // homepage: compact teaser for the first news item
+  function newsTeaser(C, lang){
+    const it = C.news.items[0];
+    if(!it) return "";
+    return section("news-teaser", false, `
+      ${head(lang==="zh"?"News":"News", tv(C.news.title, lang))}
+      <a class="teaser-card reveal" href="${href("news.html")}">
+        <div class="teaser-media"><img src="${esc(it.image||C.news.image)}" alt=""></div>
+        <div class="teaser-body">
+          <h3>${tv(it.title,lang)}</h3>
+          <p class="teaser-lead">${tv(it.lead,lang)}</p>
+          <span class="teaser-more">${lang==="zh"?"閱讀全文 →":"Read more →"}</span>
+        </div>
+      </a>`);
+  }
+
+  // homepage: interactive cards linking to every page
+  function exploreGrid(C, lang){
+    return section("explore", true, `
+      ${head("TPMI", lang==="zh"?"探索 TPMI":"Explore TPMI")}
+      <div class="explore-grid reveal">
+        ${NAV.map(n=>`
+          <a class="explore-card" href="${href(n.file)}">
+            ${icon(n.page)}
+            <span class="ec-title">${esc(tv(C[n.key].title,lang))}</span>
+            <span class="ec-blurb">${esc(tv(BLURB[n.page],lang))}</span>
+            <span class="ec-arrow" aria-hidden="true">→</span>
+          </a>`).join("")}
+      </div>`);
+  }
+
+  function introBody(C, lang){
+    return split(img(C.intro.image, lang), C.intro.paragraphs[lang], lang, false);
+  }
+  function aboutBody(C, lang){
+    return split(img(C.about.image, lang), C.about.paragraphs[lang], lang, true);
+  }
+  function milestonesSection(C, lang){
+    return section("milestones", true, `
+      ${head(lang==="zh"?"歷程":"Timeline", tv(C.milestones.title, lang))}
+      <div class="timeline reveal">
+        <div class="tl-line"></div>
+        ${C.milestones.events.map((ev,i)=>`
+          <div class="tl-row ${i%2?'right':'left'}">
+            <div class="tl-node"></div>
+            <div class="tl-card">
+              <div class="tl-meta"><span class="tl-year">${esc(ev.year)}</span><span class="tl-month">${esc(tv(ev.month,lang))}</span></div>
+              <p>${esc(tv(ev.text,lang))}</p>
+            </div>
+          </div>`).join("")}
+      </div>
+    `);
+  }
+  function partnerBody(C, lang){
+    const pProse = `<h3>${esc(tv(C.partner.heading, lang))}</h3>` +
+      C.partner.paragraphs[lang].map(p=>`<p>${p}</p>`).join("");
+    return `
+      <div class="prose partner-intro reveal">${pProse}</div>
+      <div class="region-eyebrow reveal">${esc(tv(C.partner.regionsTitle,lang))}</div>
+      <div class="region-grid reveal">
+        ${C.partner.regions.map(r=>`
+          <div class="region-card" style="--rc:${esc(r.color)}">
+            <div class="region-head"><span class="region-name">${esc(tv(r.name,lang))}</span><span class="region-count">${(r.hospitals[lang]||[]).length}</span></div>
+            <ul class="region-list">${(r.hospitals[lang]||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
+          </div>`).join("")}
+      </div>`;
+  }
+  function teamBody(C, lang){
+    return `
+      <div class="region-eyebrow reveal">${esc(tv(C.leadership.subtitle,lang))}</div>
+      <div class="leader-grid reveal">
+        ${C.leadership.leaders.map(l=>`<a href="${esc(l.link||'#')}" ${l.link?'target="_blank" rel="noopener"':''}><img src="${esc(l.img)}" alt="${esc(l.alt||'')}" loading="lazy"></a>`).join("")}
+      </div>
+      ${carousel("team", tv(C.teamCarousel.title,lang), C.teamCarousel.items.map(it=>carItem(img(it.img,lang), it.link)))}
+      ${carousel("hteam", tv(C.hospitalTeam.title,lang), C.hospitalTeam.items.map(it=>carItem(img(it.img,lang), it.link)))}`;
+  }
+  function researchBody(C, lang){
+    return `
+      <div class="research-grid reveal">
+        <div class="paper-list">
+          ${C.research.items.map(r=>`<a class="paper" href="${esc(r.url||'#')}" target="_blank" rel="noopener">
+            <span class="paper-title">${esc(tv(r.title,lang))}</span>
+            <span class="paper-authors">${esc(tv(r.authors,lang))}</span></a>`).join("")}
+        </div>
+        <div class="research-media"><img src="${esc(C.research.sideImage)}" alt="" loading="lazy"></div>
+      </div>`;
+  }
+  function accessBody(C, lang){
+    return `
+      <div class="platform-grid reveal">
+        ${C.accessData.cards.map(c=>{
+          const inner = `
+            <div class="platform-top"><span class="platform-name">${esc(c.name)}</span><span class="platform-tag">${esc(tv(c.tag,lang))}</span></div>
+            <p class="platform-desc">${esc(tv(c.desc,lang))}</p>
+            <div class="platform-foot">${ c.link ? `<span class="platform-cta">${lang==="zh"?"前往平台 →":"Open platform →"}</span>` : `<span class="platform-badge">${esc(tv(c.badge,lang))}</span>` }</div>`;
+          return c.link
+            ? `<a class="platform-card" href="${esc(c.link)}" target="_blank" rel="noopener">${inner}</a>`
+            : `<div class="platform-card no-link">${inner}</div>`;
+        }).join("")}
+      </div>`;
+  }
+  function collabBody(C, lang){
+    return `
+      <ol class="steps reveal">
+        ${C.collaboration.steps.map((s,i)=>`
+          <li class="step">
+            <span class="step-num">${i+1}</span>
+            <div class="step-body"><h4>${esc(tv(s.title,lang))}</h4><p>${esc(tv(s.desc,lang))}</p></div>
+          </li>`).join("")}
+      </ol>
+      <div class="collab-actions">
+        <a class="btn-primary" href="${esc(C.collaboration.conceptSheetUrl)}" target="_blank" rel="noopener">${lang==="zh"?"下載 Concept Sheet 申請表":"Download Concept Sheet"}</a>
+        <a class="btn-ghost" href="mailto:${esc(C.contact.email)}">${lang==="zh"?"來信洽詢":"Contact us"} · ${esc(C.contact.email)}</a>
+      </div>`;
+  }
+
+  const PAGES = {
+    home(C, lang){
+      return heroSection(C,lang) + statsBand(C,lang) + newsTeaser(C,lang) + exploreGrid(C,lang);
+    },
+    news(C, lang){
+      return pageHero("News", tv(C.news.title,lang), tv(BLURB.news,lang)) +
+        section("news", false, newsBody(C,lang));
+    },
+    intro(C, lang){
+      return pageHero(lang==="zh"?"Why Taiwan":"Why Taiwan", tv(C.intro.title,lang), tv(BLURB.intro,lang)) +
+        section("intro", false, introBody(C,lang));
+    },
+    about(C, lang){
+      return pageHero("TPMI", tv(C.about.title,lang), tv(BLURB.about,lang)) +
+        section("about", false, aboutBody(C,lang)) +
+        statsBand(C,lang) +
+        milestonesSection(C,lang);
+    },
+    partner(C, lang){
+      return pageHero(lang==="zh"?"合作網絡":"Network", tv(C.partner.title,lang), tv(BLURB.partner,lang)) +
+        section("partner", false, partnerBody(C,lang));
+    },
+    team(C, lang){
+      return pageHero(lang==="zh"?"團隊":"Team", tv(C.leadership.title,lang), tv(BLURB.team,lang)) +
+        section("leadership", false, teamBody(C,lang));
+    },
+    research(C, lang){
+      return pageHero(lang==="zh"?"發表":"Publications", tv(C.research.title,lang), tv(BLURB.research,lang)) +
+        section("research", false, researchBody(C,lang));
+    },
+    data(C, lang){
+      return pageHero(tv(C.accessData.subtitle,lang), tv(C.accessData.title,lang), tv(BLURB.data,lang)) +
+        section("access", false, accessBody(C,lang));
+    },
+    collab(C, lang){
+      return pageHero(tv(C.collaboration.intro,lang), tv(C.collaboration.title,lang), tv(BLURB.collab,lang)) +
+        section("collab", false, collabBody(C,lang));
+    }
+  };
+
   /* ---------- dynamic wiring (per render) ---------- */
+  let autoTimers = [];
   function wireDynamic(){
     const heroBtn = document.getElementById("hero-btn");
-    if (heroBtn) heroBtn.onclick = () => document.getElementById("research")?.scrollIntoView();
+    if (heroBtn) heroBtn.onclick = () => location.href = href("research.html");
 
-    // carousels
+    // carousels (drag + buttons + gentle autoplay that pauses on hover)
+    autoTimers.forEach(clearInterval); autoTimers = [];
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.querySelectorAll("[data-carousel]").forEach(c=>{
       const track = c.querySelector(".carousel-track");
       const step = () => Math.max(track.clientWidth*0.8, 240);
@@ -398,6 +508,19 @@
       track.addEventListener("mousedown",e=>{down=true;sx=e.pageX;sl=track.scrollLeft;track.style.scrollBehavior="auto";});
       window.addEventListener("mouseup",()=>{down=false;track.style.scrollBehavior="smooth";});
       track.addEventListener("mousemove",e=>{if(!down)return;e.preventDefault();track.scrollLeft=sl-(e.pageX-sx);});
+      // autoplay
+      if(!reduceMotion){
+        let paused=false;
+        c.addEventListener("mouseenter",()=>paused=true);
+        c.addEventListener("mouseleave",()=>paused=false);
+        track.addEventListener("touchstart",()=>paused=true,{passive:true});
+        autoTimers.push(setInterval(()=>{
+          if(paused || down || !c.isConnected) return;
+          const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+          if(atEnd) track.scrollTo({left:0,behavior:"smooth"});
+          else track.scrollBy({left:step(),behavior:"smooth"});
+        }, 4500));
+      }
     });
 
     // lightbox
@@ -449,7 +572,20 @@
   /* ---------- static wiring (once) ---------- */
   function wireStatic(){
     const header = document.querySelector(".site-header");
-    window.addEventListener("scroll",()=>header.classList.toggle("scrolled",window.scrollY>16),{passive:true});
+    // reading progress bar under the header
+    const prog = document.createElement("div");
+    prog.id = "scroll-progress"; header.appendChild(prog);
+    // floating back-to-top button
+    const toTop = document.createElement("button");
+    toTop.id = "to-top"; toTop.setAttribute("aria-label","back to top"); toTop.innerHTML = "&#8679;";
+    toTop.onclick = ()=>window.scrollTo({top:0,behavior:"smooth"});
+    document.body.appendChild(toTop);
+    window.addEventListener("scroll",()=>{
+      header.classList.toggle("scrolled",window.scrollY>16);
+      const max = document.documentElement.scrollHeight - innerHeight;
+      prog.style.width = (max>0 ? (window.scrollY/max)*100 : 0) + "%";
+      toTop.classList.toggle("show", window.scrollY > 560);
+    },{passive:true});
 
     const burger = document.getElementById("hamburger");
     const drawer = document.getElementById("nav-drawer");

@@ -376,7 +376,7 @@
     SECTIONS.forEach(s=>{
       const b=el("button","side-link"+(s.id===activeSection?" active":""));
       b.innerHTML=`<span class="ic">${s.icon}</span>${s.label[previewLang]}`;
-      b.onclick=()=>{ activeSection=s.id; renderEditor(); };
+      b.onclick=()=>{ activeSection=s.id; renderEditor(); syncPreviewPage(); };
       sb.appendChild(b);
     });
   }
@@ -388,6 +388,17 @@
   }
 
   /* ---------------- PREVIEW ---------------- */
+  // which public page shows the section being edited
+  const PAGE_OF = {
+    news:"news.html", intro:"intro.html", about:"about.html", stats:"index.html",
+    partner:"partner.html", milestones:"about.html", collaboration:"collab.html",
+    research:"research.html", access:"data.html", contact:"index.html", media:"index.html"
+  };
+  function syncPreviewPage(){
+    const f=$("#preview-frame"); if(!f) return;
+    const want=(PAGE_OF[activeSection]||"index.html")+"?preview=1&lang="+previewLang;
+    if(!f.getAttribute("src") || f.getAttribute("src")!==want) f.src=want;
+  }
   function previewRefresh(){
     const f=$("#preview-frame");
     if(f && f.contentWindow){ try{ f.contentWindow.postMessage({tpmi:true,lang:previewLang},"*"); }catch(e){} }
@@ -414,8 +425,8 @@
     renderEditor();
     setDirty(dirty);
     const f=$("#preview-frame");
-    f.src="index.html?preview=1&lang="+previewLang;
     f.addEventListener("load",previewRefresh);
+    syncPreviewPage();
   }
 
   document.addEventListener("DOMContentLoaded",()=>{
