@@ -317,6 +317,11 @@
   function edMedia(root){
     root.appendChild(headBlock(previewLang==="zh"?"圖片管理":"Images", previewLang==="zh"?"替換主視覺與資訊圖。上傳的圖片會存在瀏覽器，匯出後交給工程師。":"Replace hero and infographics. Uploads are stored in the browser; export to hand off."));
     const c1=cardWrap(previewLang==="zh"?"主視覺 Hero":"Hero");
+    const note=document.createElement("p"); note.className="field-note";
+    note.textContent = previewLang==="zh"
+      ? "預設主視覺為向量繪製（任何解析度都清晰）。上傳圖片會取代向量版；要恢復向量版請將圖片還原為預設。"
+      : "The default hero is vector-drawn (sharp at any resolution). Uploading an image replaces it; restore the default image to get the vector back.";
+    c1.appendChild(note);
     c1.appendChild(imageField(previewLang==="zh"?"桌機版主視覺":"Desktop hero", draft.hero, "image", false));
     c1.appendChild(imageField(previewLang==="zh"?"手機版主視覺":"Mobile hero", draft.hero, "imageMobile", false));
     c1.appendChild(biText(previewLang==="zh"?"按鈕文字":"Button text", draft.hero, "buttonText", false));

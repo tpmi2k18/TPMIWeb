@@ -140,6 +140,7 @@ main { padding-top:var(--header-h); }
 /* ---------------- Hero ---------------- */
 .hero { position:relative; background:#0e3e5b; }
 .hero img { width:100%; display:block; }
+.hero svg.hero-art { width:100%; height:auto; display:block; background:#fff; }
 .hero .hero-desktop { object-fit:cover; }
 .hero .hero-mobile { display:none; }
 .hero-cta {

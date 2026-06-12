@@ -164,3 +164,6 @@ textarea.f-input{ resize:vertical; min-height:76px; line-height:1.6; }
   .bi-grid{ grid-template-columns:1fr; }
   .topbar .tb-title{ display:none; }
 }
+
+/* informational note inside editor cards */
+.field-note { font-size:12.5px; color:#7a8694; background:#f0f5f9; border-left:3px solid #9fc3d8; padding:8px 12px; border-radius:6px; margin:0 0 14px; line-height:1.6; }
